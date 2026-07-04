@@ -14,22 +14,27 @@ This research aims to investigate the impact of various risk factors on the burd
 In summary, this study will contribute to the growing body of research on dementia by exploring how regional and lifestyle factors interact with and influence the disease burden of dementia. We aim to analyze how different risk factors contribute to the DALY burden of dementia worldwide to provide more information on how future public health strategies can be modified for dementia prevention and care.
 
 ## Data Sources & Methods
+
 ### 2.1 Data Sources
 Our research is based on data from several datasets by WHO’s Global Health Observatory (GHO). From each dataset, we selected country-level estimates of our variable of interest aggregated on both sexes.
+
 #### 2.1.1 Burden of Dementia
 For measurements of the burden of dementia, we extracted data from “Global Health Estimates 2021: Disease burden by Cause, Age, Sex, by Country and by Region, 2000-2021”. In this report, the burden due to dementia was estimated in terms of disability-adjusted life years (DALYs) for 185 countries in each of the years 2000, 2010, 2015, 2019, 2020, and 2021 based on population surveys assessing the severity of disability by dementia. WHO defines DALYs as “A composite measure of disease burden calculated as the sum of Years Lived with Disability (YLD) and Years of Life Lost (YLL), thereby summarizing the effects of dementia on both the quantity (premature mortality) and quality of life (disability).”
+
 #### 2.1.2 Risk Factors of Dementia
 For measurements of the prevalence of dementia risk factors, we used data from the GHO’s Indicators database. The indicator datasets included in the final model of our research were “Alcohol, heavy episodic drinking (population) past 30 days” and “Prevalence of obesity among adults, BMI ≥ 30”. The first dataset includes age-standardized measurements of the “proportion of adults (15+ years) who have had at least 60 grams or more of pure alcohol on at least one occasion in the past 30 days” based on surveys on nationally representative samples and population-based surveys. Measurements were available for 194 countries for each of the years spanning 2000 to 2019. The second dataset includes age standardized measurements of the “percentage of adults aged 18+ years with a body mass index (BMI) of 30 kg/m2 or higher” based on population-based surveys. Measurements were available from the years spanning 1990 to 2021 for 199 countries. 
 
 Other indicators included in our research but not in our final model were “Prevalence of insufficient physical activity among adults ages 18+ years”, “Prevalence of overweight among adults, BMI>= 25”, and “Prevalence of hypertension among adults aged 30-79 years”.
+
 ### 2.2 Data Cleaning
 All datasets were imported into and cleaned using R. From each dataset, we selected columns for the main value, country, and year. From one dataset, we additionally included the corresponding WHO region of each country in the final data. From the DALYs dataset, we additionally kept the population of each country to standardize the DALY measurements. After recognizing curved trends involving them, we also performed a log transformation on DALYs. All quantitative variables (DALYs, year, alcohol, obesity, insufficient physical activity, overweight, and hypertension) were also centered.
 
 Each dataset was then inner joined on country and year. The resulting data frame had 706 rows, where each observation was an occasion within a country, including 178 countries in the years 2000, 2010, 2015, and 2019.
 
-
+<img src="images/fig1.png">
 
 Figure 1. Data has a multilevel structure with occasions as Level 1 units and countries as Level 2 units.
+
 ### 2.3 Methods
 All statistical analysis was also performed using R. Packages used include the tidyverse, lme4, and emmeans packages. To handle the nested structure of our data, we built a linear multilevel model using the lmer function from the lme4 package. In order to test whether the effect of risk factors on the burden of dementia differs across regions, we used DALYs due to dementia as the response variable and included cross-level interactions between each risk factor and region. Note that while countries are also nested within regions, we decided to treat region as a country-level variable and use interactions rather than treat region as a third level and use random slopes out of interest in the coefficients at each specific region. To test the significance of each set of terms added to the model, we used restricted maximum likelihood (REML) tests. To assess the final models’ estimated marginal effects of each risk factor across regions, we looked at confidence intervals produced by the emtrends function from the emmeans package.
 
@@ -37,14 +42,19 @@ All statistical analysis was also performed using R. Packages used include the t
 ### 3.1 Exploratory Analysis
 Based on a matrix plot including all initial quantitative variables, we decided to narrow down our risk factor variables of interest to alcohol and obesity. Both showed relatively strong positive associations with DALYs, suggesting they would be appropriate predictors to include in our model. Hypertension and insufficient physical activity showed no apparent association, so we did not consider including either during our model building. Overweight as a risk factor also showed a positive association with DALYs as well as a clear association with obesity, so it was excluded to avoid multicollinearity. We preferred obesity over overweight as it is a more direct risk factor for dementia (Alzheimers.org, 2024). DALYs also showed a positive trend across years. Although obesity also increases over time, we decided to consider year as a predictor to account for aging populations, which would contribute to increased cases of dementia as dementia most commonly appears among the elderly and ultimately contribute to higher DALY measurements. Still, it is important to note the consequential risk of multicollinearity and proceed with caution.
 
+<img src="images/fig2.png">
+
 Figure 2. Matrix plot for the variables DALYs due to dementia, year, and prevalences of heavy drinking, hypertension, lack of physical activity, obesity, and overweight.
 
 Scatterplots separated by region suggested that the associations between each risk factor and DALYs do differ across regions. Notably, while Africa, Europe, and the Western Pacific have similar wide spreads for alcohol, they do not share as extreme DALYs; the slope appears to be greater for Europe and flat for Africa, with the Western Pacific in between. In the association between obesity and DALYs, the slopes for Africa and the Eastern Mediterranean are noticeably more flat. These differences support the inclusion of interactions between our risk factors and region in our model.
 
+<img src="images/fig3.png">
 
 Figure 3. Scatter plots of DALYs due to dementia against (a) prevalence of heavy drinking and (b) prevalence of obesity, faceted by region.
+
 ### 3.2 Model Building
 We began with a null model including only random intercepts for country. We learned from the model that the between-country variation in DALYs is much greater than the within-country variation (τ2 = 0.559, σ2 = 0.063). Accordingly, the null model had a high ICC value of 0.899, meaning 89.9% of variation in DALYs can be attributed to differences between countries. We proceeded to add the Level 1 predictors year, alcohol, and obesity. This model was a significantly better fit than the null model (X2 = 338.39, df = 3, p < 2.2e-16), and each coefficient had a t-value greater than 2. We then proceeded to add the Level 2 predictor region, which was also statistically significant (X2 = 105.99, df = 5, p < 2.2e-16). Finally, we added the interaction between obesity and region, then the interaction between alcohol and region. Each significantly improved the model before it (X2 = 124.85, df = 5, p < 2.2e-16 and X2 = 9.7683.85, df = 5, p = 0.082 < 0.1). This final model explained 64.3% of the unexplained Level 1 variation and 50.5% of the unexplained Level 2 variation from the null model.
+
 ### 3.3 Final Model
 The final model estimated the country-to-country variance in DALYs due to dementia to be 0.277 log(years), or 1.32 years. The occasion-to-occasion variance in DALYs was estimated to be 0.022 log(years) or 1.02 years. Using Africa as the reference region, the model estimated an intercept of -0.87. This means the predicted DALYs due to dementia in an African country with average rates of heavy drinking and obesity in the average year 2010 is e-0.87 = 0.42 years per capita, or approximately 42,000 years per 100,000 population. For year, our model estimated a slope coefficient of 0.02. This means each additional year is associated with a 1.02-fold change in DALYs due to dementia in an African country with average rates of heavy drinking and obesity. For alcohol, our model estimated a slope coefficient of 0.005. This means a percentage point increase in the prevalence of heavy drinking is associated with a e0.005 = 1.005-fold change in DALYs due to dementia in an African country with average obesity in 2010. For obesity, our model estimated a slope coefficient of -0.03. This means a percentage point increase in the prevalence of heavy drinking is associated with a e-0.03 = 0.95-fold change in DALYs due to dementia in an African country with an average rate of heavy drinking in 2010.
 
@@ -91,11 +101,14 @@ Table 2. Marginal effect estimates of the prevalence of alcohol and obesity by r
 
 95% confidence intervals for these marginal effects show that the effect of alcohol on DALYs is only significant in Europe and the Western Pacific, as 1 is not included only in the intervals for these two regions. This exclusion of 1 means it is not plausible that DALYs remain constant as the prevalence of heavy drinking increases by a percentage point. The intervals also show that the effect of obesity on DALYs is significantly less in Africa and the Eastern Mediterranean, as the intervals for these regions do not overlap with the intervals of the other regions. This separation means it is not plausible that the effect of obesity on DALYs is the same between these two sets of regions. 
 
+<img src="images/fig4.png">
  
 Figure 4. 95% confidence intervals of the marginal effect of (a) the prevalence of heavy drinking and (b) the prevalence of obesity on DALYs due to dementia by region.
 
 ### 3.4 Diagnostic Analysis
 The residuals versus fits of the final model show a fairly random scatter with no clear fanning, allowing us to assume linearity and equal variance of the residuals. The points of the Q-Q plot indicate slight deviation; however, the majority of points fall roughly along the reference line, allowing us to assume the normality of the residuals. This is further supported by the histogram of residuals showing an approximately normal distribution. The satisfaction of these assumptions provides proof of the validity of the significance tests and confidence intervals from our model.
+
+<img src="images/fig5.png">
 
 Figure 5. Diagnostic plots verify the linearity, normality, and equal variance of residual assumptions.
 
@@ -118,7 +131,6 @@ In the future, increasing the number of regions included in the study would redu
 ### Term Definitions 
 Disability-Adjusted Life Years (DALYs) account for mortality and morbidity. Mortality includes the life expectancy of an individual at the time they become sick - the age at their death. Morbidity can be calculated by finding the product of disability weight (which is defined as 0 for a fully healthy individual, 0.3, which is common for an individual with a long-term chronic illness, or 1 for being fully disabled) and duration of the disability. 
 
-
 ### Data Sources
 For more information on the data sources:
 
@@ -134,9 +146,6 @@ Alcohol, Heavy Episodic Drinking:
 
 [https://www.who.int/data/gho/data/indicators/indicator-details/GHO/alcohol-heavy-episodic-drinking-(15-)-past-30-days-(-)-age-standardized-with-95-ci]
 
-
-
-
 ### Variables
 | Name | Variable Role | Type | Value (Units) |
 | --- | --- | --- | --- |
@@ -146,17 +155,16 @@ Alcohol, Heavy Episodic Drinking:
 |Prevalence of obesity|Level 1 Predictor|Quantitative|Percentage|
 |WHO Region|Level 2 Predictor|Categorical|Africa, the Americas, South-East Asia, Europe, Eastern Mediterranean, Western Pacific|
 
-
-
 ### Marginal Effects of Obesity and Alcohol on Estimated DALYs
 The graphs displayed below visualize the marginal effect of obesity and alcohol on estimated DALYs due to dementia, respectively. 
 
-The two risk factors addressed in this study are taken from common risk factors of dementia as noted by the resources utilized as reference for this paper and from health classes, such as Nutrition in Aging,  taught at the California Polytechnic University at San Luis Obispo. 
+The two risk factors addressed in this study are taken from common risk factors of dementia as noted by the resources utilized as reference for this paper and from health classes, such as Nutrition in Aging, taught at the California Polytechnic University at San Luis Obispo. 
 
 Based on the graph depicting the marginal effect of obesity on estimated DALYs, the prevalence of obesity in the Eastern Mediterranean and Africa doesn’t follow an upward trend compared to the other regions. Instead, the curve lies more flat than curved. This indicates that the prevalence of obesity may not play as significant of a role in DALYs for Africa and the Eastern Mediterranean as it does in other regions. This may be due to other factors, such as a lack of healthcare services available to patients in Africa or the Eastern Mediterranean, which can lead to more deaths as a direct effect of obesity rather than dementia, as the average life expectancy is typically lower in such countries. We do want to note that the downward trend of obesity in Africa is not expected, but this shape may be due to confounding variables that were not accounted for within the model. 
 
 Based on the graph depicting the marginal effect of alcohol on estimated DALYs, the prevalence of heavy drinking of alcohol in Europe and the Western Pacific appears to be more substantial compared to other regions. The insignificant effects of alcohol on DALYs in those other regions could indicate that other factors may have more of an impact on DALYs due to dementia than alcohol does.
 
+<img src="images/apend.png">
 
 ### Citations
 Alzheimers.gov. (2024, July 9). Research on alzheimer’s disease and related dementias | alzheimers.gov. Research on Alzheimer’s Disease and Related Dementias . https://www.alzheimers.gov/taking-action/research-activities
